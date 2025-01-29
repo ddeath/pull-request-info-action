@@ -1,6 +1,8 @@
-name: The name of your action here
-description: Provide a description here
-author: Your name or organization here
+name: pull-request-info-action
+description: |
+  Github Action which returns Pull Request Information based on commit_sha.
+  This is for scenarios when you need that information on main branch after PR is merged
+author: Dusan Plavak (ddeath)
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
@@ -9,15 +11,19 @@ branding:
 
 # Define your inputs here.
 inputs:
-  milliseconds:
-    description: Your input description here
+  github-token:
+    description: 'The repository token, i.e. secrets.GITHUB_TOKEN'
     required: true
-    default: '1000'
+  commit_sha:
+    description: Commit Sha for which you want to lookup PR information. If not provided github.sha will be used
+    required: false
 
 # Define your outputs here.
 outputs:
-  time:
-    description: Your output description here
+  labels:
+    description: List of labels on PR
+  pullRequestBranchName:
+    description: Name of the from which PR was open
 
 runs:
   using: node20
