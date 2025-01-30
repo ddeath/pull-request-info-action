@@ -11,18 +11,21 @@ branding:
 
 # Define your inputs here.
 inputs:
-  github-token:
+  github_token:
     description: 'The repository token, i.e. secrets.GITHUB_TOKEN'
     required: true
   commit_sha:
     description: Commit Sha for which you want to lookup PR information. If not provided github.sha will be used
     required: false
-  onlyMerged:
+  only_merged:
     description: If true, discards all PRs which are not merged
     default: 'true'
-  targetBranch:
+  target_branch:
     description: This will keep only PRs which were / will be merged to targetBranch
     default: 'main'
+  fail_on_missing_pr:
+    description: Action will fail if no associated PRs which also match filtering option is found
+    default: 'true'
 
 # Define your outputs here.
 outputs:
