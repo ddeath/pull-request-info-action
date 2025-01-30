@@ -17,13 +17,20 @@ inputs:
   commit_sha:
     description: Commit Sha for which you want to lookup PR information. If not provided github.sha will be used
     required: false
+  onlyMerged:
+    description: If true, discards all PRs which are not merged
+    default: 'true'
+  targetBranch:
+    description: This will keep only PRs which were / will be merged to targetBranch
+    default: 'main'
 
 # Define your outputs here.
 outputs:
-  labels:
-    description: List of labels on PR
-  pullRequestBranchName:
-    description: Name of the from which PR was open
+  pullRequests:
+    description: |
+      List of PullRequests referencing specified commit and filter.
+      Response has format of Github Api Rest response from this call:
+      https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#list-pull-requests-associated-with-a-commit
 
 runs:
   using: node20

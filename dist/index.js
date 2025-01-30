@@ -31672,42 +31672,57 @@ var __webpack_exports__ = {};
 var core = __nccwpck_require__(7484);
 // EXTERNAL MODULE: ./node_modules/@actions/github/lib/github.js
 var github = __nccwpck_require__(3228);
-;// CONCATENATED MODULE: ./lib/getPullRequestInfo.js
+;// CONCATENATED MODULE: ./lib/getPullRequests.js
 
-async function getPullRequestInfo({ octokit, repoName, repoOwner, commit_sha, }) {
+async function getPullRequests({ octokit, repoName, repoOwner, commit_sha, }) {
     core.debug(`PR context - Owner: ${repoOwner} Repo: ${repoName} Commit_SHA: ${commit_sha}`);
     const response = await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
         owner: repoOwner,
         repo: repoName,
         commit_sha,
     });
-    core.debug(`Retrieved commit data: ${response.data}`);
-    if (response.data.length > 0) {
-        core.warning("Found multiple matching PRs. Information will returned only for first PR.");
-    }
-    if (response.data.length === 0) {
-        throw Error(`Didnt find any matching PRs! PR context - Owner: ${repoOwner} Repo: ${repoName} Commit_SHA: ${commit_sha}`);
-    }
-    const pullRequestInfo = response.data[0];
-    core.debug(`Retrieved PR: ${pullRequestInfo}`);
-    return pullRequestInfo;
+    core.debug(`Retrieved commit PRs data: ${response.data}`);
+    return response.data;
 }
+
+;// CONCATENATED MODULE: ./lib/filterPullRequests.js
+
+const filterPullRequests = (data, options) => {
+    const { onlyMerged, targetBranch } = options;
+    core.debug(`PRs filter options: ${options}`);
+    const filteredPRs = data
+        .filter(pr => {
+        if (onlyMerged && pr.merged_at === null)
+            return false;
+        if (targetBranch && pr.base.ref !== targetBranch)
+            return false;
+        return true;
+    })
+        .sort((a, b) => {
+        if (onlyMerged)
+            return a.merged_at.localeCompare(b.merged_at);
+        return a.updated_at.localeCompare(b.updated_at);
+    });
+    core.debug(`Filtered PR: ${filteredPRs}`);
+    return filteredPRs;
+};
 
 ;// CONCATENATED MODULE: ./lib/index.js
 
 
 
+
 const run = async () => {
     const token = core.getInput("github-token", { required: true });
+    const onlyMerged = core.getInput("onlyMerged").toLowerCase() === 'true';
+    const targetBranch = core.getInput("targetBranch");
     const octokit = github.getOctokit(token);
-    const repoName = github.context.repo.owner;
-    const repoOwner = github.context.repo.repo;
+    const repoName = github.context.repo.repo;
+    const repoOwner = github.context.repo.owner;
     const commit_sha = github.context.sha;
-    const pullRequestInfo = await getPullRequestInfo({ octokit, repoOwner, repoName, commit_sha });
-    const labels = pullRequestInfo.labels.map(label => label.name);
-    const pullRequestBranchName = pullRequestInfo.head.ref;
-    core.setOutput("labels", labels);
-    core.setOutput("pullRequestBranchName", pullRequestBranchName);
+    const pullRequests = await getPullRequests({ octokit, repoOwner, repoName, commit_sha });
+    const filteredPullRequests = filterPullRequests(pullRequests, { onlyMerged, targetBranch });
+    core.setOutput("pullRequests", filteredPullRequests);
 };
 run().catch((err) => {
     core.setFailed(`Action failed with error: ${err.message}`);

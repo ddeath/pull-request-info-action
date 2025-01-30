@@ -1,23 +1,23 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
-import { getPullRequestInfo } from './getPullRequestInfo.js'
+import { getPullRequests } from './getPullRequests.js'
+import { filterPullRequests } from './filterPullRequests.js';
 
 const run = async () => {
   const token = core.getInput("github-token", { required: true });
+  const onlyMerged = core.getInput("onlyMerged").toLowerCase() === 'true';
+  const targetBranch = core.getInput("targetBranch");
+
   const octokit = github.getOctokit(token)
 
-  const repoName = github.context.repo.owner
-  const repoOwner = github.context.repo.repo
+  const repoName = github.context.repo.repo
+  const repoOwner = github.context.repo.owner
   const commit_sha = github.context.sha
 
-  const pullRequestInfo = await getPullRequestInfo({octokit, repoOwner, repoName, commit_sha})
-  
-  const labels = pullRequestInfo.labels.map(label => label.name)
-  const pullRequestBranchName = pullRequestInfo.head.ref
+  const pullRequests = await getPullRequests({octokit, repoOwner, repoName, commit_sha})
+  const filteredPullRequests = filterPullRequests(pullRequests, { onlyMerged, targetBranch })
 
-
-  core.setOutput("labels", labels)
-  core.setOutput("pullRequestBranchName", pullRequestBranchName)
+  core.setOutput("pullRequests", filteredPullRequests)
 }
 
 run().catch((err) => {
