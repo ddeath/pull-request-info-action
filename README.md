@@ -25,12 +25,29 @@ Name of the from which PR was open
 ## Example usage
 
 ```yaml
-uses: ddeath/pull-request-info-action@main
-with:
-  github_token: {{ secrets.GITHUB_TOKEN }}
+name: 'Release and Publish'
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: ddeath/pull-request-info-action@main
+        id: pr-info
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Test if PR contained test-1 label
+        run: echo ${{ contains(fromJson(steps.pr-info.outputs.pullRequests)[0].labels, 'test-1') }}
 ```
 
-### Example content of respons from action:
+### Example response content from action when return_full_information=true :
 ```json
 [
   {
@@ -381,6 +398,17 @@ with:
     "author_association": "MEMBER",
     "auto_merge": null,
     "active_lock_reason": null
+  }
+]
+```
+
+### Example response content from action when return_full_information=false :
+```json
+[
+  {
+    "labels": [],
+    "targetBranchName": "main",
+    "sourceBranchName": "chore/NOJIRA/debugging-6"
   }
 ]
 ```

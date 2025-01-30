@@ -31707,7 +31707,19 @@ const filterPullRequests = (data, options) => {
     return filteredPRs;
 };
 
+;// CONCATENATED MODULE: ./lib/transformPullRequests.js
+
+const transformPullRequests = (data) => {
+    core.debug(`Transforming pull requests`);
+    return data.map(pr => ({
+        labels: pr.labels.map(label => label.name),
+        sourceBranchName: pr.head.ref,
+        targetBranchName: pr.base.ref,
+    }));
+};
+
 ;// CONCATENATED MODULE: ./lib/index.js
+
 
 
 
@@ -31717,6 +31729,7 @@ const run = async () => {
     const onlyMerged = core.getInput("only_merged").toLowerCase() === 'true';
     const targetBranch = core.getInput("target_branch");
     const failOnMissingPr = core.getInput("fail_on_missing_pr").toLowerCase() === 'true';
+    const returnFullInformation = core.getInput("return_full_information").toLowerCase() === 'true';
     const octokit = github.getOctokit(token);
     const repoName = github.context.repo.repo;
     const repoOwner = github.context.repo.owner;
@@ -31726,7 +31739,11 @@ const run = async () => {
     if (failOnMissingPr && filteredPullRequests.length === 0) {
         throw new Error("No PRs matching criteria were found!");
     }
-    core.setOutput("pullRequests", filteredPullRequests);
+    let response = filteredPullRequests;
+    if (!returnFullInformation) {
+        response = transformPullRequests(filteredPullRequests);
+    }
+    core.setOutput("pullRequests", response);
 };
 run().catch((err) => {
     core.setFailed(`Action failed with error: ${err.message}`);

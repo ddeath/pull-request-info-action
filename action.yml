@@ -26,13 +26,16 @@ inputs:
   fail_on_missing_pr:
     description: Action will fail if no associated PRs which also match filtering option is found
     default: 'true'
+  return_full_information:
+    description: Action will return full rest response from Github api if this is set to true. Otherwise custom processed fields will be returned
+    default: 'false'
 
 # Define your outputs here.
 outputs:
   pullRequests:
     description: |
       List of PullRequests referencing specified commit and filter.
-      Response has format of Github Api Rest response from this call:
+      Response has format of Github Api Rest response if return_full_information is set to true:
       https://docs.github.com/en/rest/commits/commits?apiVersion=2022-11-28#list-pull-requests-associated-with-a-commit
 
 runs:

@@ -2,12 +2,14 @@ import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { getPullRequests } from './getPullRequests.js'
 import { filterPullRequests } from './filterPullRequests.js';
+import { transformPullRequests } from './transformPullRequests.js';
 
 const run = async () => {
   const token = core.getInput("github_token", { required: true })
   const onlyMerged = core.getInput("only_merged").toLowerCase() === 'true'
   const targetBranch = core.getInput("target_branch")
   const failOnMissingPr = core.getInput("fail_on_missing_pr").toLowerCase() === 'true'
+  const returnFullInformation = core.getInput("return_full_information").toLowerCase() === 'true'
 
   const octokit = github.getOctokit(token)
 
@@ -22,7 +24,12 @@ const run = async () => {
     throw new Error("No PRs matching criteria were found!")
   }
 
-  core.setOutput("pullRequests", filteredPullRequests)
+  let response: any = filteredPullRequests
+  if (!returnFullInformation) {
+    response = transformPullRequests(filteredPullRequests)
+  }
+
+  core.setOutput("pullRequests", response)
 }
 
 run().catch((err) => {
